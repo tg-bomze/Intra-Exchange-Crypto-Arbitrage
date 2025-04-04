@@ -1,21 +1,21 @@
 # Intra-Exchange-Crypto-Arbitrage
 IECA - Python application for monitoring arbitrage situations between trading pairs inside cryptocurrency exchanges
 
-![logo](pics/logo.png)
+![logo](static/logo.png)
 
 Since the advent of the cryptocurrency market, Bitcoin has often held a leading position. Its price movements can influence the rates of other cryptocurrencies (altcoins).
 
-![capitalization](pics/1_capitalization.png)
+![capitalization](static/1_capitalization.png)
 
 While major trends might show positive correlation, shorter timeframes can reveal temporary discrepancies or lags between related trading pairs (e.g., Altcoin/BTC vs. Altcoin/Base vs. BTC/Base).
 
-![lag](pics/2_lag.png)
+![lag](static/2_lag.png)
 
 The picture above illustrates potential rate differences between related pairs like Litecoin/USDT, Litecoin/BTC, and Bitcoin/USDT. These lags, often due to varying trading volumes and market reactions, can create temporary arbitrage opportunities.
 
 An arbitrage trading scheme exploits these temporary price discrepancies between three instruments (a triangular arbitrage).
 
-![scheme](pics/3_scheme.png)
+![scheme](static/3_scheme.png)
 
 To describe it, I will give an example based on percentage gain:
 
@@ -32,11 +32,37 @@ Monitoring exchanges manually to find these fleeting opportunities across numero
 2. Calculate potential arbitrage profits (as a percentage) for predefined triangular trading paths (e.g., `ADA->BTC->USDT->ADA`).
 3. Display the results, highlighting profitable opportunities.
 
-![interface](pics/4_interface.jpg) (Note: Interface may differ slightly from the screenshot)
+## Usage
+
+1.  **Clone the repository:**
+    ```bash
+    git clone <repository-url>
+    cd Intra-Exchange-Crypto-Arbitrage
+    ```
+
+2.  **Install dependencies:**
+    It's recommended to use a virtual environment:
+    ```bash
+    python -m venv venv
+    source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+    pip install -r requirements.txt
+    ```
+3.  **Run the application:**
+    ```bash
+    python3 app.py
+    ```
+
+4.  **Access the application:**
+    ```bash
+    # After running the application, open your browser and navigate to:
+    http://127.0.0.1:5001/
+    ```
+
+![interface](static/4_interface.jpg) (Note: Interface may differ slightly from the screenshot)
 
 This tool helps identify *potential* arbitrage situations. Actual execution requires automated trading bots, as these opportunities can appear and disappear within seconds. Backtesting on historical data has shown the potential viability of this approach, although real-world trading involves additional complexities like execution delays and slippage.
 
-![backtesting](pics/5_backtesting.png)
+![backtesting](static/5_backtesting.png)
 
 This algorithm is based on research originally registered with the Federal Intellectual Property Service ["RosPatent"](https://new.fips.ru/registers-doc-view/fips_servlet?DB=EVM&rn=567&DocNumber=2019615667&TypeFile=html).
 

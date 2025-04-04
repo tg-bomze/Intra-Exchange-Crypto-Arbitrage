@@ -1,158 +1,191 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IECA Python</title>
-    <!-- Basic Styling (Consider using Bootstrap later) -->
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <!-- Optional: Custom CSS overrides -->
     <style>
-        body { font-family: sans-serif; display: flex; margin: 20px; }
-        .sidebar { width: 30%; padding-right: 20px; border-right: 1px solid #ccc; }
-        .main-panel { width: 70%; padding-left: 20px; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
-        .flashes { list-style: none; padding: 0; margin: 10px 0; }
-        .flashes li { padding: 10px; margin-bottom: 5px; border-radius: 4px; }
-        .flashes .info { background-color: #d9edf7; color: #31708f; }
-        .flashes .success { background-color: #dff0d8; color: #3c763d; }
-        .flashes .error { background-color: #f2dede; color: #a94442; }
-        .tabs button { padding: 10px; margin-right: 5px; cursor: pointer; }
-        .tabs button.active { background-color: #ddd; }
+        body { padding-top: 20px; padding-bottom: 20px; } /* Add some padding */
+        .sidebar { border-right: 1px solid #495057; padding-right: 15px; }
+        .main-panel { padding-left: 15px; }
+        pre { background-color: #212529; padding: 10px; border-radius: 4px; border: 1px solid #495057; color: #f8f9fa; }
+        /* Keep table styles simple, Bootstrap handles most */
+        th, td { text-align: left; }
+        /* Ensure tabs have some margin */
+        .nav-tabs { margin-bottom: 15px; }
+        /* Style for the logo */
+        .logo-img {
+            max-width: 300px; /* Adjust size as needed */
+            height: auto;
+            margin-bottom: 10px; /* Add some space below the logo */
+        }
     </style>
 </head>
 <body>
-    <div class="sidebar">
-        <h5>IECA (Intra-Exchange Crypto-Arbitrage) is a tool for monitoring arbitration situations on the intra-exchange crypto-currency market.</h5>
-        <h6>*Tab 'Limit Price' uses BID and ASK, and tab 'Market Price' uses last actual price</h6>
-        <h3>Control Panel</h3>
-        <h4>Choose Exchange (update):</h4>
-        <form action="/update_binance" method="post">
-            <button type="submit">Binance</button>
-        </form>
-        <br><br><br>
-        <pre>Now: {{ exchange_name }}</pre>
-        <pre>Last update: {{ last_update }}</pre>
-        
-        <!-- Flash messages -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <ul class="flashes">
-                {% for category, message in messages %}
-                    <li class="{{ category }}">{{ message }}</li>
-                {% endfor %}
-                </ul>
-            {% endif %}
-        {% endwith %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-3 sidebar">
+            <!-- Add the logo here -->
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="logo-img">
+            <h5>Intra-Exchange Crypto-Arbitrage</h5>
+            <p><small>A tool for monitoring arbitration situations on the intra-exchange crypto-currency market.</small></p>
+            <hr>
+            <h3>Control Panel</h3>
+            <h4>Choose Exchange (update):</h4>
+            <form action="/update_binance" method="post" class="mb-3">
+                <button type="submit" class="btn btn-primary">Update Binance</button>
+            </form>
+
+            <pre>Now: {{ exchange_name }}</pre>
+            <pre>Last update: {{ last_update }}</pre>
+
+            <!-- Flash messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="mt-3">
+                    {% for category, message in messages %}
+                        {% set alert_class = 'alert-secondary' %} <!-- Default -->
+                        {% if category == 'info' %}
+                            {% set alert_class = 'alert-info' %}
+                        {% elif category == 'success' %}
+                            {% set alert_class = 'alert-success' %}
+                        {% elif category == 'error' or category == 'danger' %}
+                            {% set alert_class = 'alert-danger' %}
+                        {% elif category == 'warning' %}
+                            {% set alert_class = 'alert-warning' %}
+                        {% endif %}
+                        <div class="alert {{ alert_class }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        <div class="col-md-9 main-panel">
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="showUnprofitable" onchange="filterTableRows()">
+                <label class="form-check-label" for="showUnprofitable">
+                    Show unprofitable rows
+                </label>
+            </div>
+
+            <!-- Bootstrap Tabs -->
+            <ul class="nav nav-tabs" id="resultsTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="market-tab" data-bs-toggle="tab" data-bs-target="#market" type="button" role="tab" aria-controls="market" aria-selected="true">Market Price</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="limit-tab" data-bs-toggle="tab" data-bs-target="#limit" type="button" role="tab" aria-controls="limit" aria-selected="false">Limit Price</button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="resultsTabContent">
+                <div class="tab-pane fade show active" id="market" role="tabpanel" aria-labelledby="market-tab">
+                    <h4>Market Price</h4><h6> (Last actual price)</h6>
+                    {% if mark_results %}
+                        <table class="table table-striped table-hover table-sm table-dark">
+                            <thead>
+                                <tr>
+                                    <th>Crypto Plan</th>
+                                    <th>Percent of Profit (%)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in mark_results %}
+                                    <tr>
+                                        <td>{{ row.Crypto_Plan }}</td>
+                                        <td>{{ row.Percent_of_Profit }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <div class="alert alert-info" role="alert">
+                            No market price results yet. Click Update.
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="tab-pane fade" id="limit" role="tabpanel" aria-labelledby="limit-tab">
+                    <h4>Limit Price</h4><h6> (BID and ASK)</h6>
+                     {% if lim_results %}
+                        <table class="table table-striped table-hover table-sm table-dark">
+                            <thead>
+                                <tr>
+                                    <th>Crypto Plan</th>
+                                    <th>Percent of Profit (%)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in lim_results %}
+                                    <tr>
+                                        <td>{{ row.Crypto_Plan }}</td>
+                                        <td>{{ row.Percent_of_Profit }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                         <div class="alert alert-info" role="alert">
+                            No limit price results yet. Click Update.
+                         </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
     </div>
+</div> <!-- /container-fluid -->
 
-    <div class="main-panel">
-        <div style="margin-bottom: 15px;">
-            <input type="checkbox" id="showUnprofitable" onchange="filterTableRows()">
-            <label for="showUnprofitable">Show unprofitable</label>
-        </div>
+<!-- Bootstrap Bundle with Popper -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
 
-        <div class="tabs">
-            <button class="tab-button active" onclick="openTab(event, 'market')">Market Price</button>
-            <button class="tab-button" onclick="openTab(event, 'limit')">Limit Price</button>
-        </div>
+<script>
+    // Function to filter table rows based on profit and checkbox state
+    function filterTableRows() {
+        const showUnprofitable = document.getElementById('showUnprofitable').checked;
+        // Select tables within the Bootstrap tab panes
+        const tables = document.querySelectorAll('.tab-pane table tbody');
 
-        <div id="market" class="tab-content active">
-            <h4>Market Price Results</h4>
-            {% if mark_results %}
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Crypto Plan</th>
-                            <th>Percent of Profit (%)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for row in mark_results %}
-                            <tr>
-                                <td>{{ row.Crypto_Plan }}</td>
-                                <td>{{ row.Percent_of_Profit }}</td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            {% else %}
-                <p>No market price results yet. Click Update.</p>
-            {% endif %}
-        </div>
-
-        <div id="limit" class="tab-content">
-            <h4>Limit Price Results</h4>
-             {% if lim_results %}
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Crypto Plan</th>
-                            <th>Percent of Profit (%)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for row in lim_results %}
-                            <tr>
-                                <td>{{ row.Crypto_Plan }}</td>
-                                <td>{{ row.Percent_of_Profit }}</td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            {% else %}
-                <p>No limit price results yet. Click Update.</p>
-            {% endif %}
-        </div>
-    </div>
-
-    <script>
-        function openTab(evt, tabName) {
-            var i, tabcontent, tabbuttons;
-            tabcontent = document.getElementsByClassName("tab-content");
-            for (i = 0; i < tabcontent.length; i++) {
-                tabcontent[i].style.display = "none";
-            }
-            tabbuttons = document.getElementsByClassName("tab-button");
-            for (i = 0; i < tabbuttons.length; i++) {
-                tabbuttons[i].className = tabbuttons[i].className.replace(" active", "");
-            }
-            document.getElementById(tabName).style.display = "block";
-            evt.currentTarget.className += " active";
-        }
-
-        // Function to filter table rows based on profit and checkbox state
-        function filterTableRows() {
-            const showUnprofitable = document.getElementById('showUnprofitable').checked;
-            const tables = document.querySelectorAll('.tab-content table tbody'); 
-
-            tables.forEach(tbody => {
-                const rows = tbody.querySelectorAll('tr');
-                rows.forEach(row => {
-                    const profitCell = row.cells[1]; 
-                    if (profitCell) {
-                        const profitValue = parseFloat(profitCell.textContent);
-                        if (isNaN(profitValue)) {
-                            row.style.display = '';
-                        } else if (showUnprofitable) {
-                            row.style.display = '';
-                        } else {
-                            row.style.display = profitValue > 0 ? '' : 'none';
-                        }
+        tables.forEach(tbody => {
+            const rows = tbody.querySelectorAll('tr');
+            rows.forEach(row => {
+                // Assuming the profit percentage is always in the second cell (index 1)
+                const profitCell = row.cells[1];
+                if (profitCell) {
+                    const profitValue = parseFloat(profitCell.textContent);
+                    // Handle cases where parsing might fail (e.g., header row if selector was wrong)
+                    if (isNaN(profitValue)) {
+                         row.style.display = ''; // Always show if not a valid number row
+                    } else if (showUnprofitable) {
+                        row.style.display = ''; // Show all rows if checkbox is checked
+                    } else {
+                        // Show only if profit is positive, hide otherwise
+                        row.style.display = profitValue > 0 ? '' : 'none';
                     }
-                });
+                }
             });
-        }
-
-        // Initial filter on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            // Make sure the 'Market Price' tab is active and visible initially if it contains the table
-            document.getElementById('market').style.display = 'block'; 
-            filterTableRows(); // Apply filter after DOM is ready
         });
-    </script>
+    }
+
+    // Initial filter on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        filterTableRows(); // Apply filter after DOM is ready
+
+        // Optional: Re-apply filter when a tab is shown
+        const tabElList = document.querySelectorAll('button[data-bs-toggle="tab"]');
+        tabElList.forEach(tabEl => {
+            tabEl.addEventListener('shown.bs.tab', event => {
+                filterTableRows();
+            });
+        });
+    });
+</script>
 
 </body>
 </html> 
