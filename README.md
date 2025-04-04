@@ -1,48 +1,43 @@
 # Intra-Exchange-Crypto-Arbitrage
-IECA - Shiny application for monitoring arbitrage situations between trading pairs inside cryptocurrency exchanges
+IECA - Python application for monitoring arbitrage situations between trading pairs inside cryptocurrency exchanges
 
 ![logo](pics/logo.png)
 
-[Russian README](pics/README_Rus.md)
-
-Since the advent of the cryptocurrency market, Bitcoin has always held a leading position in terms of market capitalization. This is due to the fact that it is more popular in the information field than other cryptocurrencies called altcoins.
+Since the advent of the cryptocurrency market, Bitcoin has often held a leading position. Its price movements can influence the rates of other cryptocurrencies (altcoins).
 
 ![capitalization](pics/1_capitalization.png)
 
-The growth and decline of the Bitcoin rate presented on the weekly charts lead to similar changes in the altcoin rate,
-which indicates the presence of a positive correlation between them. This is due to the fact that Bitcoin sets the mood for the entire cryptocurrency market. A similar picture can be observed on the tick chart, however, it should be borne in mind that periods of negative correlation often appear on lower timeframes, for example, as follows:
+While major trends might show positive correlation, shorter timeframes can reveal temporary discrepancies or lags between related trading pairs (e.g., Altcoin/BTC vs. Altcoin/Base vs. BTC/Base).
 
 ![lag](pics/2_lag.png)
 
-The picture above shows the rates of three cryptocurrencies: Bitcoin, Litecoin and Tezer, trading in pairs with each other. It is worth noting immediately that Tezer is a cryptocurrency, designated as USDT and reflecting the maximum price of the dollar, so below, for convenience, I will call it the dollar.
+The picture above illustrates potential rate differences between related pairs like Litecoin/USDT, Litecoin/BTC, and Bitcoin/USDT. These lags, often due to varying trading volumes and market reactions, can create temporary arbitrage opportunities.
 
-You may notice
-that at some points the Litecoin/Dollar and Litecoin/Bitcoin pairs are characterized by a lag in the course relative to Bitcoin / Dollar. This is due to the low daily altcoin trading volume. Based on the delays and dependence of altcoins on Bitcoin, an arbitrage trading scheme is built between the three instruments.
+An arbitrage trading scheme exploits these temporary price discrepancies between three instruments (a triangular arbitrage).
 
 ![scheme](pics/3_scheme.png)
 
-To describe it, I will give an example:
+To describe it, I will give an example based on percentage gain:
 
-1) Let's say we have funds in dollars (5000 USDT). Imagine that at the moment there is a high coefficient of negative correlation, and the price of Bitcoin is also falling relative to the Dollar, so the first step is to buy it at a more favorable rate (**5000 USDT → 0.57413 BTC**);
+Imagine we have an initial amount of a base currency (like BTC or ETH).
 
-2) Due to the negative correlation, the Litecoin/Bitcoin rate will follow upward after the falling Bitcoin/Dollar, however, due to the delays described earlier, we can manage to buy it at a still low rate, so the second step is to buy Litecoin (**0.57413 BTC → 36.8163 LTC**);
+1)  We observe a favorable rate to exchange our initial Base currency for Crypto A. We perform the trade, accounting for fees.
+2)  Due to market lags, the Crypto A / Crypto B rate might still be favorable. We exchange Crypto A for Crypto B.
+3)  Finally, we exchange Crypto B back to our original Base currency. If the price differences were significant enough to overcome transaction fees, we end up with more of the Base currency than we started with, resulting in a percentage profit.
 
-3) Since the trading volume of Litecoin/Dollar is greater, than Litecoin/Bitcoin, therefore, there will be less lags in it, which means that the growth of its course will already occur. As the last third step, we sell Lightcoins for Dollars, thereby completing the first arbitrage trading with profit (**36.8163 LTC → 5014.8 USDT - 5000 USDT = 14.8 USDT ~ $ 14.8**).
+For example, a sequence like `BTC -> ADA -> USDT -> BTC` might yield a small percentage profit if the intermediate rates allow for it after accounting for fees across the three trades.
 
-Steps 4, 5, 6 already refer to the second and is carried out in a similar way.
+Monitoring exchanges manually to find these fleeting opportunities across numerous trading pairs is impractical. Therefore, this application was developed to:
+1. Fetch current market data (ticker prices) directly from the Binance exchange API.
+2. Calculate potential arbitrage profits (as a percentage) for predefined triangular trading paths (e.g., `ADA->BTC->USDT->ADA`).
+3. Display the results, highlighting profitable opportunities.
 
-It is problematic to independently monitor exchanges and find the possibility of arbitrage trading due to the large number of trading instruments, therefore, an adviser was written in the form of a [shiny-web application](https://ieca.shinyapps.io/test/) that receives current rates and issues the optimal trading scheme. 
+![interface](pics/4_interface.jpg) (Note: Interface may differ slightly from the screenshot)
 
-![interface](pics/4_interface.jpg)
-
-Since the API of cryptocurrency exchanges changes / updates quite often, some monitors temporarily stopped working. Now you can evaluate the work of the script on the following exchanges: **Bitfinex** and **HitBTC**. Other than that, since arbitrage situations can occur and disappear in a matter of seconds, for safe trading it is necessary to write a robot that was not planned as part of this study.
-
-Backtesting was also conducted for this forecasting method.
+This tool helps identify *potential* arbitrage situations. Actual execution requires automated trading bots, as these opportunities can appear and disappear within seconds. Backtesting on historical data has shown the potential viability of this approach, although real-world trading involves additional complexities like execution delays and slippage.
 
 ![backtesting](pics/5_backtesting.png)
 
-Imitation of trade occurred on data for a one-day period. The presence of unprofitable transactions on the chart is explained by delays in their execution, however, their number is small, which indicates the possibility of profitable arbitrage trading between the three instruments of the cryptocurrency market.
+This algorithm is based on research originally registered with the Federal Intellectual Property Service ["RosPatent"](https://new.fips.ru/registers-doc-view/fips_servlet?DB=EVM&rn=567&DocNumber=2019615667&TypeFile=html).
 
-In conclusion, I would like to add that this algorithm is [registered](https://new.fips.ru/registers-doc-view/fips_servlet?DB=EVM&rn=567&DocNumber=2019615667&TypeFile=html) with the Federal Intellectual Property Service ["RosPatent"](https://fips.ru).
-
-My scientific adviser [Kozlov Denis Yurievich](mailto:dyk.barnaul@gmail.com) also worked on this research.
+Scientific adviser for the original research: [Kozlov Denis Yurievich](mailto:dyk.barnaul@gmail.com).
